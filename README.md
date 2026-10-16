@@ -6,8 +6,12 @@ built in ROS 2 and Gazebo, every module measured against ground truth.**
 
 **ROS 2 Humble · Gazebo Harmonic · ros2_control · robot_localization · Python / NumPy · SolidWorks**
 
-<!-- TOP IMAGE: replace with a GIF of the docking run when you have it: ![Docking demo](docs/docking.gif) -->
-![Hitchpoint vehicle model](docs/vehicle.png)
+![Hitchpoint reversing a 13.6 m trailer into a warehouse dock door, fully autonomous (Gazebo, sped up)](docs/docking.gif)
+
+*Autonomous reversing into a warehouse dock door: localization, lidar hitch-angle estimation and the reversing
+controller running together in Gazebo (sped up ~30×).*
+
+<!-- Full 15 s video: on github.com, Edit this file and drag hitchpoint_docking_15s.mp4 onto this line -->
 
 ## Headline results (Gazebo, scored on ground truth)
 
@@ -19,6 +23,8 @@ built in ROS 2 and Gazebo, every module measured against ground truth.**
 | **Localization** | **0.15 m RMSE** over 883 m (wheel odometry alone: 271 m) |
 
 ## What I built
+
+![Hitchpoint vehicle model](docs/vehicle.png)
 
 | Module | Approach |
 |---|---|
