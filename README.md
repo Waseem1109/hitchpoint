@@ -11,7 +11,7 @@ built in ROS 2 and Gazebo, every module measured against ground truth.**
 *Autonomous reversing into a warehouse dock door: localization, lidar hitch-angle estimation and the reversing
 controller running together in Gazebo (sped up ~30×).*
 
-<!-- Full 15 s video: on github.com, Edit this file and drag hitchpoint_docking_15s.mp4 onto this line -->
+ ▶ **[Watch the 15 s video](docs/hitchpoint_docking_15s.mp4)** (Gazebo + RViz + evaluator result)
 
 ## Headline results (Gazebo, scored on ground truth)
 
