@@ -103,7 +103,7 @@ lidar alone.
 ## Source code
 
 The source code is in a private repository. **Recruiters and hiring teams: read access on request**:
-Waseem Sajjad · roboticengineer4590@gmail.com
+Waseem Sajjad 
 
 ---
 © 2026 Waseem Sajjad. All rights reserved. No license is granted to use, copy, modify or distribute this work.
