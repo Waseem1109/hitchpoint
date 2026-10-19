@@ -6,6 +6,10 @@ within a few centimetres: built in ROS 2 and Gazebo, every module measured again
 
 **ROS 2 Humble · Gazebo Harmonic · ros2_control · robot_localization · Python / NumPy · SolidWorks**
 
+![Hitchpoint driving autonomously through the container port (Gazebo + RViz, sped up)](docs/Video_project.gif)
+
+*Autonomous driving through the port: routing on the lane map, path tracking and the front safety corridor (Gazebo + RViz, sped up).* ▶ **[Full video](docs/Video_project.mp4)**
+
 ![Hitchpoint reversing a 13.6 m trailer into a warehouse dock door, fully autonomous (Gazebo, sped up)](docs/docking.gif)
 
 *Autonomous reversing into a warehouse dock door: localization, lidar hitch-angle estimation and the reversing
