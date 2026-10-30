@@ -29,6 +29,8 @@ controller running together in Gazebo (sped up ~30×).*
 | **Reversing** | 90° reversing turns end within **2.6 cm** and **0.43°**; a 2 m start offset is closed within ~15 m |
 | **Hitch-angle estimation** | **0.22° RMSE** (max 1.4°) during hard reversing, from tractor-mounted lidar, no sensor on the trailer |
 | **Localization** | **0.15 m RMSE** over 883 m (wheel odometry alone: 271 m) |
+| **Without GNSS** | Roof lidar matched to a map of the port: **2.7 cm RMSE** over the full 2.6 km mission, docking included, with **no GNSS after the first 60 s** (wheels + IMU alone: 1.4 m) |
+| **SLAM benchmark** | KISS-ICP, FAST-LIO2 and Cartographer 3D replayed on the same drive: the map localization stays at **5 cm** without GNSS, **10× better** than wheels + IMU (0.48 m); lidar-only SLAM loses track on a 290 m straight road |
 
 ## What I built
 
@@ -39,6 +41,8 @@ controller running together in Gazebo (sped up ~30×).*
 | Vehicle model | URDF/xacro from my SolidWorks CAD (custom STEP → COLLADA converter that restores colours), Ackermann steering via `ros2_control`, articulated trailer, 6 lidars, 7 cameras, IMU, dual GNSS |
 | Simulation world | Generated 840 × 500 m container port: ships, cranes, 25 yard blocks, road grid, warehouse with 8 dock doors; geometry merged into tiles for real-time sensor rendering |
 | Localization | Dual EKF: wheel odometry + IMU in `odom`, + RTK GNSS in `map` |
+| Lidar map localization | 2.5D signed-distance map of the port (4 height slabs, 0.25 m); Gauss-Newton scan matching with robust weights and a covariance from the fit, fused into the global EKF; wide search to relocalize; live map update (log-odds with 3D ray clearing) for a yard that changes |
+| SLAM benchmark | Record once in Gazebo, replay into every method; each scored alone, + IMU, + wheels + IMU and + lidar map; a sanity check drops odometry that disagrees with wheels and IMU |
 | Hitch-angle estimation | 1-DOF fit of the trailer outline to lidar points + single-track kinematic model, fused in an EKF that applies late lidar scans at their own timestamp and replays newer inputs |
 | Reversing control | Cascade: pure pursuit on the trailer axle → exact steady-state curvature-to-hitch-angle map → feedback-linearised hitch-angle loop, with jackknife protection |
 | Docking | Plans a line-arc-line reversing path to a door's **world** position; map → world alignment from GNSS |
@@ -143,6 +147,48 @@ lidar alone.
 | EKF wheel + IMU | 11.2 m | 18.3 m | 2.08 % |
 | **EKF + RTK GNSS** | **0.152 m** | **0.198 m** | 0.02 % |
 
+## Localization without GNSS
+
+Under the ship-to-shore cranes and between the container stacks, GNSS degrades or drops out. Wheel odometry with
+the IMU then drifts. The truck matches its roof lidar to a map of the port instead, and that match goes into the
+same EKF as the GNSS.
+
+![Gate to crane 3 with GNSS lost under the stacks and cranes (shaded): lidar map localization vs wheels + IMU](docs/lidar_no_gnss.png)
+
+*Gate → crane 3 (724 m), GNSS cut between the container stacks and under the cranes (shaded). Wheel odometry
+drifts 4.4 m; the EKF with the lidar map stays within a few centimetres (lines on the zero line).*
+
+| Full mission, no GNSS after 60 s (2.6 km, 645 s, docking included) | RMSE | Max | Final |
+|---|---|---|---|
+| **EKF + lidar map localization** | **2.7 cm** | 24 cm (at forward/reverse changes) | **7 cm** |
+| lidar map localization alone | 2.8 cm | 13 cm | |
+| EKF wheels + IMU (no lidar) | | 1.41 m | |
+
+## SLAM benchmark: which odometry survives a port without GNSS?
+
+The same recorded drive (gate → crane 3, 724 m, GNSS cut after 60 s) replayed into open-source lidar SLAM / LIO
+methods and into Hitchpoint's own localization. Each method is scored alone, fused with the IMU, with wheels +
+IMU, and with wheels + IMU + the lidar map.
+
+![Worst error after GNSS is lost, per method and fusion](docs/slam_benchmark.png)
+
+- **The lidar map wins by 10×:** 5 cm worst error with any odometry, against 0.42 m for the best odometry-only
+  combination (Cartographer with wheel odometry, fused with wheels + IMU).
+- **A straight road defeats lidar-only scan matching.** On the 290 m gate road every scan looks like the last
+  one. Cartographer 3D (lidar + IMU) estimated 3 m of motion while the truck drove 290 m, and KISS-ICP slid the
+  same way (12 % drift). FAST-LIO2's tight IMU coupling held (0.08 % drift). Cartographer with the wheel
+  odometry as its motion prior: 7.9 m instead of 299 m.
+- **One lost odometry source broke the whole stack** (103 m) until I added a check: a method's motion is only
+  fused when it agrees with the wheel speed and the IMU yaw rate. With the check: 6.5 cm.
+
+### When the yard changes
+
+Containers move all day, so the map is never the yard. In an offline ray-cast test with 60 % of the stack
+slots changed, the stale map matched confidently to the wrong containers (1.7 m). A live map, updated by an
+earlier drive with RTK GNSS (log-odds per cell, 3D ray clearing), brought it back to 7 cm.
+
+![Lidar map localization when the container yard changes](docs/changing_yard.png)
+
 ## Problems found and solved
 
 - **16 cm lateral drift that grew with distance.** Arrival error was 0.16 m at 460 m from the start, too regular to be
@@ -167,6 +213,13 @@ lidar alone.
 - **Wheel-odometry heading fails with a trailer** (drive-axle slip in turns): the hitch model uses the IMU.
 - **An integral term** for the 0.2 m arc offset was tried and dropped: it made the final docking accuracy worse.
 
+- **The benchmark replay measured itself first.** `ros2 bag record` stores wall-clock receive times, so the
+  replay clock is now taken from the sensor stamps. Without the EKF's TF, `navsat_transform` silently kept the
+  GNSS antenna 3.4 m off the truck. The scorer aligned odometry on its first pose, which the EKF publishes
+  before the IMU heading arrives: 371 m of fake error from a 0.48 m result.
+- **Wall-clock lag in the lidar scans** (rendering load) put the scan-matching prior 4 m off at 8 m/s; the
+  localizer now takes the EKF pose at the scan's own time.
+
 ## Roadmap
 
 - [x] Vehicle model, port world, sensors
@@ -174,8 +227,10 @@ lidar alone.
 - [x] Reversing control and docking, rear safety stop
 - [x] Road map, routing, Lanelet2 export
 - [x] Forward driving, front safety stop
-- [ ] Full mission in Gazebo (crane → dock → parking bay → gate)
-- [ ] Lidar-map localization through GNSS outages
+- [x] Full mission in Gazebo (crane → dock → parking bay → gate)
+- [x] Lidar-map localization through GNSS outages, live map update
+- [x] SLAM / LIO benchmark: static port (KISS-ICP, FAST-LIO2, Cartographer 3D)
+- [ ] SLAM benchmark in a changed yard and with moving traffic; LIO-SAM, Point-LIO, RKO-LIO, GLIM
 - [ ] Randomized scenario runs, fault injection, CI
 
 ## Source code
