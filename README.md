@@ -30,7 +30,7 @@ controller running together in Gazebo (sped up ~30×).*
 | **Hitch-angle estimation** | **0.22° RMSE** (max 1.4°) during hard reversing, from tractor-mounted lidar, no sensor on the trailer |
 | **Localization** | **0.15 m RMSE** over 883 m (wheel odometry alone: 271 m) |
 | **Without GNSS** | Roof lidar matched to a map of the port: **2.7 cm RMSE** over the full 2.6 km mission, docking included, with **no GNSS after the first 60 s** (wheels + IMU alone: 1.4 m) |
-| **SLAM benchmark** | KISS-ICP, FAST-LIO2 and Cartographer 3D replayed on the same drive: the map localization stays at **5 cm** without GNSS, **10× better** than wheels + IMU (0.48 m); lidar-only SLAM loses track on a 290 m straight road |
+| **SLAM benchmark** | 8 open-source lidar SLAM / LIO methods replayed on the same drive (FAST-LIO2, Point-LIO, LIO-SAM, GLIM, RKO-LIO, KISS-ICP, Cartographer 3D ± wheel odometry): the map localization stays at **5 cm** without GNSS, **10× better** than the best odometry; tight lidar-IMU methods drift ~0.1 %, ICP-based ones lose track on a 290 m straight road |
 
 ## What I built
 
@@ -166,7 +166,7 @@ drifts 4.4 m; the EKF with the lidar map stays within a few centimetres (lines o
 
 ## SLAM benchmark: which odometry survives a port without GNSS?
 
-The same recorded drive (gate → crane 3, 724 m, GNSS cut after 60 s) replayed into open-source lidar SLAM / LIO
+The same recorded drive (gate → crane 3, 724 m, GNSS cut after 60 s) replayed into 8 open-source lidar SLAM / LIO
 methods and into Hitchpoint's own localization. Each method is scored alone, fused with the IMU, with wheels +
 IMU, and with wheels + IMU + the lidar map.
 
@@ -174,10 +174,26 @@ IMU, and with wheels + IMU + the lidar map.
 
 - **The lidar map wins by 10×:** 5 cm worst error with any odometry, against 0.42 m for the best odometry-only
   combination (Cartographer with wheel odometry, fused with wheels + IMU).
-- **A straight road defeats lidar-only scan matching.** On the 290 m gate road every scan looks like the last
-  one. Cartographer 3D (lidar + IMU) estimated 3 m of motion while the truck drove 290 m, and KISS-ICP slid the
-  same way (12 % drift). FAST-LIO2's tight IMU coupling held (0.08 % drift). Cartographer with the wheel
-  odometry as its motion prior: 7.9 m instead of 299 m.
+| Method | Drift per 100 m | Worst error without GNSS, alone |
+|---|---|---|
+| FAST-LIO2 | **0.08 %** | 1.6 m |
+| Point-LIO (lighter settings, 0.3× replay) | 0.09 % | 2.7 m |
+| LIO-SAM | 0.11 % | 201 m (heading creeps while parked) |
+| GLIM (CPU) | 0.34 % | 2.2 m |
+| Cartographer 3D + wheel odometry | 0.47 % | 7.9 m |
+| RKO-LIO | 12 % | 103 m |
+| KISS-ICP | 12 % | 111 m |
+| Cartographer 3D (lidar + IMU) | 42 % | 299 m |
+| **Hitchpoint lidar map localization** | 0.04 % | **5 cm** |
+
+- **Tightly coupled lidar + IMU holds on a straight road; ICP-based scan matching slides.** On the 290 m gate
+  road every scan looks like the last one. Cartographer 3D (lidar + IMU) estimated 3 m of motion while the
+  truck drove 290 m; KISS-ICP and RKO-LIO (built on KISS-ICP) drift 12 %. FAST-LIO2, Point-LIO, LIO-SAM and
+  GLIM stay at 0.1–0.3 %. Cartographer with the wheel odometry as its motion prior: 7.9 m instead of 299 m.
+- **The worst errors of the good methods come from the start:** a few degrees of heading held while parked
+  become metres 700 m later (LIO-SAM's heading creeps ~15° while standing still).
+- **Cost differs a lot:** RKO-LIO needs 3.6 ms per scan; Point-LIO fell behind at full replay speed and needed
+  lighter settings and a 0.3× replay on a laptop CPU.
 - **One lost odometry source broke the whole stack** (103 m) until I added a check: a method's motion is only
   fused when it agrees with the wheel speed and the IMU yaw rate. With the check: 6.5 cm.
 
@@ -229,8 +245,9 @@ earlier drive with RTK GNSS (log-odds per cell, 3D ray clearing), brought it bac
 - [x] Forward driving, front safety stop
 - [x] Full mission in Gazebo (crane → dock → parking bay → gate)
 - [x] Lidar-map localization through GNSS outages, live map update
-- [x] SLAM / LIO benchmark: static port (KISS-ICP, FAST-LIO2, Cartographer 3D)
-- [ ] SLAM benchmark in a changed yard and with moving traffic; LIO-SAM, Point-LIO, RKO-LIO, GLIM
+- [x] SLAM / LIO benchmark, static port: 8 methods (FAST-LIO2, Point-LIO, LIO-SAM, GLIM, RKO-LIO, KISS-ICP,
+  Cartographer 3D ± wheel odometry)
+- [ ] SLAM benchmark in a changed yard and with moving traffic
 - [ ] Randomized scenario runs, fault injection, CI
 
 ## Source code
