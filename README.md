@@ -205,6 +205,14 @@ earlier drive with RTK GNSS (log-odds per cell, 3D ray clearing), brought it bac
 
 ![Lidar map localization when the container yard changes](docs/changing_yard.png)
 
+The same drive in the Gazebo world with 60 % of the stacks changed and 13 moving vehicles (oncoming convoy,
+crossing trucks, reach stacker, forklifts, workers crossing the road): the survey map costs one 5 s event of
+2.7 m; a live map brings it to 0.35 m; the true map of that yard gives 3.6 cm. The moving traffic itself did not
+hurt the map localization.
+
+![Worst error after GNSS is lost in a changed yard with moving traffic](docs/yard60_traffic_high.png)
+
+
 ## Problems found and solved
 
 - **16 cm lateral drift that grew with distance.** Arrival error was 0.16 m at 460 m from the start, too regular to be
@@ -247,7 +255,8 @@ earlier drive with RTK GNSS (log-odds per cell, 3D ray clearing), brought it bac
 - [x] Lidar-map localization through GNSS outages, live map update
 - [x] SLAM / LIO benchmark, static port: 8 methods (FAST-LIO2, Point-LIO, LIO-SAM, GLIM, RKO-LIO, KISS-ICP,
   Cartographer 3D ± wheel odometry)
-- [ ] SLAM benchmark in a changed yard and with moving traffic
+- [x] SLAM benchmark in a changed yard with moving traffic (60 % of the stacks, 13 vehicles)
+- [ ] Same drive with a live map from an earlier RTK drive (`premapped`)
 - [ ] Randomized scenario runs, fault injection, CI
 
 ## Source code
