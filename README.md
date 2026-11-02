@@ -30,8 +30,8 @@ controller running together in Gazebo (sped up ~30×).*
 | **Reversing** | 90° reversing turns end within **2.6 cm** and **0.43°**; a 2 m start offset is closed within ~15 m |
 | **Hitch-angle estimation** | **0.22° RMSE** (max 1.4°) during hard reversing, from tractor-mounted lidar, no sensor on the trailer |
 | **Localization** | **0.15 m RMSE** over 883 m (wheel odometry alone: 271 m) |
-| **Without GNSS** | Roof lidar matched to a map of the port: **2.7 cm RMSE** over the full 2.6 km mission, docking included, with **no GNSS after the first 60 s** (wheels + IMU alone: 1.4 m) |
-| **SLAM benchmark** | 8 open-source lidar SLAM / LIO methods replayed on the same drive (FAST-LIO2, Point-LIO, LIO-SAM, GLIM, RKO-LIO, KISS-ICP, Cartographer 3D ± wheel odometry): the map localization stays at **5 cm** without GNSS, about **10× better** than the best map-free odometry (it has a prior map, they do not); tight lidar-IMU methods drift ~0.1 %, ICP-based ones lose track on a 290 m straight road |
+| **Without GNSS** | Roof lidar matched to a map of the port: **2.7 cm RMSE** (ideal map) over the full 2.6 km mission, docking included, with **no GNSS after the first 60 s** (wheels + IMU alone: 1.4 m) |
+| **SLAM benchmark** | 8 open-source lidar SLAM / LIO methods replayed on the same drive (FAST-LIO2, Point-LIO, LIO-SAM, GLIM, RKO-LIO, KISS-ICP, Cartographer 3D ± wheel odometry): the map localization stays at **5 cm** (ideal map) without GNSS, about **10× better** than the best map-free odometry (it has a prior map, they do not); tight lidar-IMU methods drift ~0.1 %, ICP-based ones lose track on a 290 m straight road |
 
 ## What I built
 
@@ -188,7 +188,7 @@ IMU, and with wheels + IMU + the lidar map.
 | Cartographer 3D (lidar + IMU) | 42 % | 299 m |
 | **Hitchpoint lidar map localization** | 0.04 % | **5 cm** |
 
-*All numbers in this table: Gazebo, gate → crane 3 (724 m), worst error after GNSS is lost. The lidar map is ray-cast from the world geometry, so it is an ideal map (1 cm lidar noise), and the 8 methods have no map: this compares map-based localization with map-free odometry. Point-LIO ran at 0.3× replay with lighter settings, so its cost is not comparable. One run per scenario.*
+*All numbers in this table: Gazebo, gate → crane 3 (724 m), worst error after GNSS is lost. The lidar map is ray-cast from the world geometry, so it is an ideal map (1 cm lidar noise), and the 8 methods have no map: this compares map-based localization with map-free odometry. Point-LIO ran at 0.3× replay with lighter settings, so its cost is not comparable. Each method got settings for this lidar (32 beams, 10 Hz) and this port, chosen once and not tuned against the results; a few were changed only to make them run (Point-LIO, LIO-SAM). One run per scenario.*
 
 - **Tightly coupled lidar + IMU holds on a straight road; ICP-based scan matching slides.** On the 290 m gate
   road every scan looks like the last one. Cartographer 3D (lidar + IMU) estimated 3 m of motion while the
