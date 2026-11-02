@@ -4,6 +4,8 @@
 lane map, stops for people and obstacles ahead and behind, and reverses the trailer into a warehouse dock door to
 within a few centimetres: built in ROS 2 and Gazebo, every module measured against ground truth.**
 
+**Skills shown:** lidar map localization and sensor fusion (EKF), SLAM / LIO evaluation with a ground-truth scorer, articulated-vehicle control and docking, safety stop, ROS 2 / Gazebo simulation.
+
 **ROS 2 Humble · Gazebo Harmonic · ros2_control · robot_localization · Python / NumPy · SolidWorks**
 
 ![Hitchpoint driving autonomously through the container port (Gazebo + RViz, sped up)](docs/Video_project.gif)
@@ -15,7 +17,6 @@ within a few centimetres: built in ROS 2 and Gazebo, every module measured again
 *Autonomous reversing into a warehouse dock door: localization, lidar hitch-angle estimation and the reversing
 controller running together in Gazebo (sped up ~30×).*
 
-<!-- Full 15 s video: on github.com, Edit this file and drag hitchpoint_docking_15s.mp4 onto this line -->
 
 ## Headline results (Gazebo, scored on ground truth)
 
@@ -30,7 +31,7 @@ controller running together in Gazebo (sped up ~30×).*
 | **Hitch-angle estimation** | **0.22° RMSE** (max 1.4°) during hard reversing, from tractor-mounted lidar, no sensor on the trailer |
 | **Localization** | **0.15 m RMSE** over 883 m (wheel odometry alone: 271 m) |
 | **Without GNSS** | Roof lidar matched to a map of the port: **2.7 cm RMSE** over the full 2.6 km mission, docking included, with **no GNSS after the first 60 s** (wheels + IMU alone: 1.4 m) |
-| **SLAM benchmark** | 8 open-source lidar SLAM / LIO methods replayed on the same drive (FAST-LIO2, Point-LIO, LIO-SAM, GLIM, RKO-LIO, KISS-ICP, Cartographer 3D ± wheel odometry): the map localization stays at **5 cm** without GNSS, **10× better** than the best odometry; tight lidar-IMU methods drift ~0.1 %, ICP-based ones lose track on a 290 m straight road |
+| **SLAM benchmark** | 8 open-source lidar SLAM / LIO methods replayed on the same drive (FAST-LIO2, Point-LIO, LIO-SAM, GLIM, RKO-LIO, KISS-ICP, Cartographer 3D ± wheel odometry): the map localization stays at **5 cm** without GNSS, about **10× better** than the best map-free odometry (it has a prior map, they do not); tight lidar-IMU methods drift ~0.1 %, ICP-based ones lose track on a 290 m straight road |
 
 ## What I built
 
@@ -172,8 +173,9 @@ IMU, and with wheels + IMU + the lidar map.
 
 ![Worst error after GNSS is lost, per method and fusion](docs/slam_benchmark.png)
 
-- **The lidar map wins by 10×:** 5 cm worst error with any odometry, against 0.42 m for the best odometry-only
+- **A prior map beats map-free odometry by about 10×** (the map is ideal, see the note under the table): 5 cm worst error with any odometry, against 0.42 m for the best odometry-only
   combination (Cartographer with wheel odometry, fused with wheels + IMU).
+
 | Method | Drift per 100 m | Worst error without GNSS, alone |
 |---|---|---|
 | FAST-LIO2 | **0.08 %** | 1.6 m |
@@ -185,6 +187,8 @@ IMU, and with wheels + IMU + the lidar map.
 | KISS-ICP | 12 % | 111 m |
 | Cartographer 3D (lidar + IMU) | 42 % | 299 m |
 | **Hitchpoint lidar map localization** | 0.04 % | **5 cm** |
+
+*All numbers in this table: Gazebo, gate → crane 3 (724 m), worst error after GNSS is lost. The lidar map is ray-cast from the world geometry, so it is an ideal map (1 cm lidar noise), and the 8 methods have no map: this compares map-based localization with map-free odometry. Point-LIO ran at 0.3× replay with lighter settings, so its cost is not comparable. One run per scenario.*
 
 - **Tightly coupled lidar + IMU holds on a straight road; ICP-based scan matching slides.** On the 290 m gate
   road every scan looks like the last one. Cartographer 3D (lidar + IMU) estimated 3 m of motion while the
