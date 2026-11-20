@@ -266,7 +266,16 @@ hurt the map localization.
 ## Source code
 
 The source code is in a private repository. **Recruiters and hiring teams: read access on request**:
-Waseem Sajjad 
+Waseem Sajjad
 
 ---
 © 2026 Waseem Sajjad. All rights reserved. No license is granted to use, copy, modify or distribute this work.
+
+## Lidar SLAM / LIO benchmark
+
+Eight lidar odometry and SLAM methods on the same six-lidar replay of the truck, scored against Gazebo ground truth,
+alone and fused with wheel odometry and IMU.
+
+![All eight methods on the same replay](media/hitchpoint_all_methods_readme.gif)
+
+Results, setup and findings: [docs/lidar_slam_benchmark.md](docs/lidar_slam_benchmark.md)
