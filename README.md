@@ -1,5 +1,9 @@
 # Hitchpoint
 
+![Eight lidar SLAM / LIO methods on the same replay](media/hitchpoint_all_methods_readme.gif)
+
+*Eight lidar SLAM / LIO methods on the same six-lidar replay of the truck. Green: ground truth, red: method alone, yellow: method + wheels + IMU. [Results and findings](docs/lidar_slam_benchmark.md)*
+
 **An autonomous articulated truck (cabless tractor + 13.6 m semi-trailer) that drives a container port on its own
 lane map, stops for people and obstacles ahead and behind, and reverses the trailer into a warehouse dock door to
 within a few centimetres: built in ROS 2 and Gazebo, every module measured against ground truth.**
@@ -275,7 +279,5 @@ Waseem Sajjad
 
 Eight lidar odometry and SLAM methods on the same six-lidar replay of the truck, scored against Gazebo ground truth,
 alone and fused with wheel odometry and IMU.
-
-![All eight methods on the same replay](media/hitchpoint_all_methods_readme.gif)
 
 Results, setup and findings: [docs/lidar_slam_benchmark.md](docs/lidar_slam_benchmark.md)
