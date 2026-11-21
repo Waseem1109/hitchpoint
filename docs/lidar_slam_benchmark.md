@@ -36,17 +36,18 @@ its maximum is reached during that outage.
 | GLIM | 0.49 / 0.71 | 0.38 / 0.59 | 0.036 / 0.13 |
 | FAST-LIO2 | 0.51 / 0.69 | 0.38 / 0.62 | 0.036 / 0.13 |
 | Cartographer 3D + wheel odometry | 0.79 / 1.35 | **0.34** / 0.53 | 0.034 / 0.13 |
-| RKO-LIO | 1.50 / 2.97 | 0.37 / 0.54 | diverged in this run (see below) |
+| RKO-LIO | 2.11 / 4.03 | 0.41 / 0.63 | 0.036 / 0.14 |
 | KISS-ICP (lidar only) | 14.85 / 21.96 | 0.54 / 0.77 | 0.036 / 0.13 |
 
 Reading the table:
 - **The best lidar methods do not need the wheels.** LIO-SAM and Point-LIO alone are as good as or better than the
   same method inside the EKF; the filter's wheel odometry slips a little on an articulated truck.
 - **The EKF is a safety net, not an accuracy boost.** It brings every method, including the two that drift badly on
-  their own, within 0.8 m maximum error.
-- **Map localization dominates.** With the prior lidar map, seven of eight runs stay at 3 to 4 cm RMSE and 0.13 m
-  maximum, also through the 60 s GNSS outage. In the RKO-LIO run the map localization diverged (428 m); the same
-  localizer works in all other runs, so this is a failure of the map matching in that run, still being investigated.
+  their own, within 1.1 m maximum error.
+- **Map localization dominates.** With the prior lidar map, all eight runs stay at 3 to 4 cm RMSE and 0.14 m
+  maximum, also through the 60 s GNSS outage. One recorded RKO-LIO run lost the map once (428 m) under the extra
+  CPU load of screen recording (two software-rendered RViz views and two video encoders); repeated without
+  recording it stays at 3.6 cm, and the table shows that run.
 
 ## What went wrong, and what fixed it
 
@@ -63,7 +64,7 @@ the pipeline (113 m with the ground, 0.5 m without).
 at 0.14 Hz and fell 18 s behind real time, so its estimate never moved. Keeping every 12th point and replaying at
 half speed brought it to 0.6 m.
 
-**Fusion as a safety net.** Every method, including the two that drift, stays within 0.8 m once it is fused with
+**Fusion as a safety net.** Every method, including the two that drift, stays within 1.1 m once it is fused with
 wheel odometry and IMU, and within 0.14 m with the lidar map. For the strongest methods the EKF does not improve
 accuracy; its value is that no single sensor failure can run away with the pose.
 

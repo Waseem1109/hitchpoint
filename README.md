@@ -35,7 +35,7 @@ controller running together in Gazebo (sped up ~30×).*
 | **Hitch-angle estimation** | **0.22° RMSE** (max 1.4°) during hard reversing, from tractor-mounted lidar, no sensor on the trailer |
 | **Localization** | **0.15 m RMSE** over 883 m (wheel odometry alone: 271 m) |
 | **Without GNSS** | Roof lidar matched to a map of the port: **2.7 cm RMSE** (ideal map) over the full 2.6 km mission, docking included, with **no GNSS after the first 60 s** (wheels + IMU alone: 1.4 m) |
-| **SLAM benchmark** | 8 open-source lidar SLAM / LIO methods replayed on the same drive (FAST-LIO2, Point-LIO, LIO-SAM, GLIM, RKO-LIO, KISS-ICP, Cartographer 3D ± wheel odometry): the map localization stays at **5 cm** (ideal map) without GNSS, about **10× better** than the best map-free odometry (it has a prior map, they do not); tight lidar-IMU methods drift ~0.1 %. Second run with **all six lidars merged**: 7 of 8 methods within **1.4 m** alone, all 8 at **3–4 cm** with the map; found that Gazebo's noise-free ground makes ICP 'stick' ([details](docs/lidar_slam_benchmark.md)) |
+| **SLAM benchmark** | 8 open-source lidar SLAM / LIO methods replayed on the same drive (FAST-LIO2, Point-LIO, LIO-SAM, GLIM, RKO-LIO, KISS-ICP, Cartographer 3D ± wheel odometry): the map localization stays at **5 cm** (ideal map) without GNSS, about **10× better** than the best map-free odometry (it has a prior map, they do not); tight lidar-IMU methods drift ~0.1 %. Second run with **all six lidars merged**: 6 of 8 methods within **1.4 m** alone, all 8 at **3–4 cm** with the map; found that Gazebo's noise-free ground makes ICP 'stick' ([details](docs/lidar_slam_benchmark.md)) |
 
 ## What I built
 
@@ -237,7 +237,7 @@ merged into one cloud, the tractor and trailer cut out with the live hitch angle
 | GLIM | 0.49 / 0.71 m | 0.38 / 0.59 m | 3.6 cm / 0.13 m |
 | FAST-LIO2 | 0.51 / 0.69 m | 0.38 / 0.62 m | 3.6 cm / 0.13 m |
 | Cartographer 3D + wheel odometry | 0.79 / 1.35 m | **0.34 / 0.53 m** | 3.4 cm / 0.13 m |
-| RKO-LIO | 1.50 / 2.97 m | 0.37 / 0.54 m | diverged in this run, under investigation |
+| RKO-LIO | 2.11 / 4.03 m | 0.41 / 0.63 m | 3.6 cm / 0.14 m |
 | KISS-ICP | 14.9 / 22.0 m | 0.54 / 0.77 m | 3.6 cm / 0.13 m |
 
 - **Gazebo's ground made ICP stick.** A spinning lidar sees the same rings on a flat, noise-free ground in every
@@ -245,8 +245,11 @@ merged into one cloud, the tractor and trailer cut out with the live hitch angle
   rings to themselves and under-estimate the motion. Reproduced offline with KISS-ICP on a synthetic yard (113 m
   with the ground, 0.5 m without), then fixed with a ground-free cloud for these methods: Cartographer 6.9 → 0.8 m,
   KISS-ICP 230 → 22 m. Point-to-plane methods (FAST-LIO2, Point-LIO) were never affected.
-- **The wheels + IMU EKF is a safety net, not an accuracy boost:** it keeps every method within 0.8 m (the drifting
+- **The wheels + IMU EKF is a safety net, not an accuracy boost:** it keeps every method within 1.1 m (the drifting
   ones too), but LIO-SAM and Point-LIO alone are as good or better.
+- **Recording can break a run.** With two software-rendered RViz views and two video encoders running, RKO-LIO's
+  map localization lost the map once (428 m); the same run without recording: 3.6 cm. Scores come from runs without
+  heavy extra load.
 
 ## Problems found and solved
 
