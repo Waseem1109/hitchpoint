@@ -35,7 +35,7 @@ controller running together in Gazebo (sped up ~30×).*
 | **Hitch-angle estimation** | **0.22° RMSE** (max 1.4°) during hard reversing, from tractor-mounted lidar, no sensor on the trailer |
 | **Localization** | **0.15 m RMSE** over 883 m (wheel odometry alone: 271 m) |
 | **Without GNSS** | Roof lidar matched to a map of the port: **2.7 cm RMSE** (ideal map) over the full 2.6 km mission, docking included, with **no GNSS after the first 60 s** (wheels + IMU alone: 1.4 m) |
-| **SLAM benchmark** | 8 open-source lidar SLAM / LIO methods replayed on the same drive (FAST-LIO2, Point-LIO, LIO-SAM, GLIM, RKO-LIO, KISS-ICP, Cartographer 3D ± wheel odometry): the map localization stays at **5 cm** (ideal map) without GNSS, about **10× better** than the best map-free odometry (it has a prior map, they do not); tight lidar-IMU methods drift ~0.1 %, ICP-based ones lose track on a 290 m straight road |
+| **SLAM benchmark** | 8 open-source lidar SLAM / LIO methods replayed on the same drive (FAST-LIO2, Point-LIO, LIO-SAM, GLIM, RKO-LIO, KISS-ICP, Cartographer 3D ± wheel odometry): the map localization stays at **5 cm** (ideal map) without GNSS, about **10× better** than the best map-free odometry (it has a prior map, they do not); tight lidar-IMU methods drift ~0.1 %. Second run with **all six lidars merged**: 7 of 8 methods within **1.4 m** alone, all 8 at **3–4 cm** with the map; found that Gazebo's noise-free ground makes ICP 'stick' ([details](docs/lidar_slam_benchmark.md)) |
 
 ## What I built
 
@@ -198,6 +198,8 @@ IMU, and with wheels + IMU + the lidar map.
   road every scan looks like the last one. Cartographer 3D (lidar + IMU) estimated 3 m of motion while the
   truck drove 290 m; KISS-ICP and RKO-LIO (built on KISS-ICP) drift 12 %. FAST-LIO2, Point-LIO, LIO-SAM and
   GLIM stay at 0.1–0.3 %. Cartographer with the wheel odometry as its motion prior: 7.9 m instead of 299 m.
+  *Later traced to a large part to the simulation:* Gazebo's ground is flat and noise free, so every scan shows
+  the same rings on it and point-to-point matching locks onto them (see the six-lidar run below).
 - **The worst errors of the good methods come from the start:** a few degrees of heading held while parked
   become metres 700 m later (LIO-SAM's heading creeps ~15° while standing still).
 - **Cost differs a lot:** RKO-LIO needs 3.6 ms per scan; Point-LIO fell behind at full replay speed and needed
@@ -220,6 +222,31 @@ hurt the map localization.
 
 ![Worst error after GNSS is lost in a changed yard with moving traffic](docs/yard60_traffic_high.png)
 
+
+### Six lidars merged, and a simulation artifact
+
+A second benchmark: the drive through the changed yard, with all six lidars (roof, sides, low corners, trailer rear)
+merged into one cloud, the tractor and trailer cut out with the live hitch angle.
+[Full results, setup and findings](docs/lidar_slam_benchmark.md)
+
+| Method | Alone: RMSE / max | + wheels + IMU | + lidar map |
+|---|---|---|---|
+| LIO-SAM | **0.25 / 0.39 m** | 0.44 / 0.68 m | 3.6 cm / 0.13 m |
+| Point-LIO | 0.39 / 0.63 m | 0.42 / 0.65 m | 3.4 cm / 0.13 m |
+| Cartographer 3D | 0.45 / 0.82 m | 0.61 / 1.11 m | 3.8 cm / 0.14 m |
+| GLIM | 0.49 / 0.71 m | 0.38 / 0.59 m | 3.6 cm / 0.13 m |
+| FAST-LIO2 | 0.51 / 0.69 m | 0.38 / 0.62 m | 3.6 cm / 0.13 m |
+| Cartographer 3D + wheel odometry | 0.79 / 1.35 m | **0.34 / 0.53 m** | 3.4 cm / 0.13 m |
+| RKO-LIO | 1.50 / 2.97 m | 0.37 / 0.54 m | diverged in this run, under investigation |
+| KISS-ICP | 14.9 / 22.0 m | 0.54 / 0.77 m | 3.6 cm / 0.13 m |
+
+- **Gazebo's ground made ICP stick.** A spinning lidar sees the same rings on a flat, noise-free ground in every
+  scan, wherever the truck is; point-to-point ICP (KISS-ICP, RKO-LIO) and Cartographer's scan matcher match those
+  rings to themselves and under-estimate the motion. Reproduced offline with KISS-ICP on a synthetic yard (113 m
+  with the ground, 0.5 m without), then fixed with a ground-free cloud for these methods: Cartographer 6.9 → 0.8 m,
+  KISS-ICP 230 → 22 m. Point-to-plane methods (FAST-LIO2, Point-LIO) were never affected.
+- **The wheels + IMU EKF is a safety net, not an accuracy boost:** it keeps every method within 0.8 m (the drifting
+  ones too), but LIO-SAM and Point-LIO alone are as good or better.
 
 ## Problems found and solved
 
@@ -249,6 +276,8 @@ hurt the map localization.
   replay clock is now taken from the sensor stamps. Without the EKF's TF, `navsat_transform` silently kept the
   GNSS antenna 3.4 m off the truck. The scorer aligned odometry on its first pose, which the EKF publishes
   before the IMU heading arrives: 371 m of fake error from a 0.48 m result.
+- **Point-LIO standing still on the six-lidar cloud.** It updates per point, published at 0.14 Hz and fell 18 s
+  behind, so its pose never moved. Every 12th point and a half-speed replay → 0.39 m RMSE.
 - **Wall-clock lag in the lidar scans** (rendering load) put the scan-matching prior 4 m off at 8 m/s; the
   localizer now takes the EKF pose at the scan's own time.
 
@@ -264,6 +293,7 @@ hurt the map localization.
 - [x] SLAM / LIO benchmark, static port: 8 methods (FAST-LIO2, Point-LIO, LIO-SAM, GLIM, RKO-LIO, KISS-ICP,
   Cartographer 3D ± wheel odometry)
 - [x] SLAM benchmark in a changed yard with moving traffic (60 % of the stacks, 13 vehicles)
+- [x] SLAM benchmark with all six lidars merged; ground-free input for ICP-based methods
 - [ ] Same drive with a live map from an earlier RTK drive (`premapped`)
 - [ ] Randomized scenario runs, fault injection, CI
 
@@ -274,10 +304,3 @@ Waseem Sajjad
 
 ---
 © 2026 Waseem Sajjad. All rights reserved. No license is granted to use, copy, modify or distribute this work.
-
-## Lidar SLAM / LIO benchmark
-
-Eight lidar odometry and SLAM methods on the same six-lidar replay of the truck, scored against Gazebo ground truth,
-alone and fused with wheel odometry and IMU.
-
-Results, setup and findings: [docs/lidar_slam_benchmark.md](docs/lidar_slam_benchmark.md)
