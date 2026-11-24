@@ -307,3 +307,11 @@ Waseem Sajjad
 
 ---
 © 2026 Waseem Sajjad. All rights reserved. No license is granted to use, copy, modify or distribute this work.
+
+## Lidar perception (work in progress)
+
+Detection, tracking and 0–4 s prediction of the yard traffic (terminal trucks, reach stackers, forklifts,
+people on foot) from the six merged lidars. It is written in C++ and runs at 8–11 ms per scan on a laptop CPU.
+Every scan is scored against the simulator's ground truth. Forklifts are detected 96% of the time and workers 68%.
+Long trucks and false tracks are what I'm working on now.
+Details, numbers and the problems found: [docs/perception.md](docs/perception.md)
