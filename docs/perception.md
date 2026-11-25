@@ -6,6 +6,12 @@ laptop CPU with no GPU, and is scored every scan against the simulator's recorde
 
 ![Perception replay: tracks, predictions and ground truth](media/perception.gif)
 
+**The whole drive** (149 s of simulated time, sped up to one minute):
+
+![Whole perception replay: tracked traffic, predicted paths and ground truth](media/perception_full.gif)
+
+[Watch the whole drive as video (MP4, 720p, 1 min)](media/perception_1min.mp4)
+
 
 ## Results
 
