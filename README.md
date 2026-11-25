@@ -310,6 +310,8 @@ Waseem Sajjad
 
 ## Lidar perception
 
+[![Perception replay: tracked traffic, predicted paths and ground truth](docs/media/perception.gif)](docs/media/perception_1min.mp4)
+
 Detection, tracking and 0-4 s prediction of the yard traffic (terminal and external trucks, reach stackers,
 forklifts, people on foot) from the six merged lidars. It is written in C++, runs at about 22 ms per scan on a
 laptop CPU, and is scored every scan against recorded simulator ground truth: recall 0.82, precision 0.85,
