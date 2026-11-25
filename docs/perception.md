@@ -6,6 +6,8 @@ laptop CPU with no GPU, and is scored every scan against the simulator's recorde
 
 ![Perception replay: tracks, predictions and ground truth](media/perception.gif)
 
+![Perception replay: tracks, predictions and ground truth](media/perception.gif)
+
 ## Results
 
 The test drive is a full-rate recording of the gate → crane 3 mission through the changed yard with 13 scripted
