@@ -4,6 +4,8 @@ Detection, tracking and 0–4 s prediction of the moving traffic around the truc
 reach stackers, forklifts and people on foot in the container yard. It is written in C++ (ROS 2 Humble), runs on a
 laptop CPU with no GPU, and is scored every scan against the simulator's recorded ground truth.
 
+![Perception replay: tracks, predictions and ground truth](media/perception.gif)
+
 ## Results
 
 The test drive is a full-rate recording of the gate → crane 3 mission through the changed yard with 13 scripted
