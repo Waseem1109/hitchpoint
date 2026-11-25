@@ -251,6 +251,16 @@ merged into one cloud, the tractor and trailer cut out with the live hitch angle
   map localization lost the map once (428 m); the same run without recording: 3.6 cm. Scores come from runs without
   heavy extra load.
 
+## Lidar perception
+
+[![Perception replay: tracked traffic, predicted paths and ground truth](docs/media/perception.gif)](docs/media/perception_1min.mp4)
+
+Detection, tracking and 0-4 s prediction of the yard traffic (terminal and external trucks, reach stackers,
+forklifts, people on foot) from the six merged lidars. It is written in C++, runs at about 22 ms per scan on a
+laptop CPU, and is scored every scan against recorded simulator ground truth: recall 0.82, precision 0.85,
+MOTA 0.67, 1 s prediction error 1.6 m. Pipeline, measured fixes and open points:
+[docs/perception.md](docs/perception.md)
+
 ## Problems found and solved
 
 - **16 cm lateral drift that grew with distance.** Arrival error was 0.16 m at 460 m from the start, too regular to be
@@ -303,17 +313,7 @@ merged into one cloud, the tractor and trailer cut out with the live hitch angle
 ## Source code
 
 The source code is in a private repository. **Recruiters and hiring teams: read access on request**:
-Waseem Sajjad
+Waseem Sajjad · waseemsajjad1109@gmail.com · linkedin.com/in/waseem-sajjad-762956133
 
 ---
 © 2026 Waseem Sajjad. All rights reserved. No license is granted to use, copy, modify or distribute this work.
-
-## Lidar perception
-
-[![Perception replay: tracked traffic, predicted paths and ground truth](docs/media/perception.gif)](docs/media/perception_1min.mp4)
-
-Detection, tracking and 0-4 s prediction of the yard traffic (terminal and external trucks, reach stackers,
-forklifts, people on foot) from the six merged lidars. It is written in C++, runs at about 22 ms per scan on a
-laptop CPU, and is scored every scan against recorded simulator ground truth: recall 0.82, precision 0.85,
-MOTA 0.67, 1 s prediction error 1.6 m. Pipeline, measured fixes and open points:
-[docs/perception.md](docs/perception.md)
